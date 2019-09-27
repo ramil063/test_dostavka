@@ -1,0 +1,50 @@
+version: '3'
+services:
+  basic:
+    build: ./basic
+    volumes:
+      - ./basic:/var/www/basic
+    working_dir: /var/www/basic
+    depends_on:
+      - db
+    networks:
+      - backend
+  db:
+    image: mariadb
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456
+    volumes:
+      - ./databases:/etc/mysql
+    networks:
+      - backend
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 6080:8080
+    networks:
+      - backend
+  composer:
+    image: composer:1.9
+    volumes:
+      - ~/.composer-docker/cache:/root/.composer/cache:delegated
+      - ./basic:/app:delegated
+    command: composer install
+    networks:
+      - backend
+### NGINX Server #########################################
+  nginx:
+    build:
+      context: ./nginx
+    volumes:
+      - ./basic:/var/www/basic
+    ports:
+      - 9000:80
+    depends_on:
+      - basic
+    networks:
+      - backend
+
+networks:
+  backend:
